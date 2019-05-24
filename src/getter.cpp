@@ -34,11 +34,26 @@ int main(int argc, char** argv) {
     int width = clientSync.getInt(imageKey + ":width");
     int height = clientSync.getInt(imageKey + ":height");
     int channels = clientSync.getInt(imageKey + ":channels");
-    Image* image = clientSync.getImage(width, height, channels, imageKey);
+    std::cout <<"#Info" << std::endl
+              << width << "x" << height << "x" << channels << std::endl;
 
-    cv::Mat rgbImage(height, width, CV_8UC3, image->data());
-    cv::Mat bgrImage;
-    cv::cvtColor(rgbImage, bgrImage, cv::COLOR_RGB2BGR);
+    Image* image = clientSync.getImage(width, height, channels, imageKey);
+    if (image == NULL) {
+        std::cerr << "Failed to retrieve image from redis" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    cv::Mat rgbImage, bgrImage;
+    switch (channels) {
+        case 3:
+            rgbImage = cv::Mat(height, width, CV_8UC3, image->data());
+            cv::cvtColor(rgbImage, bgrImage, cv::COLOR_RGB2BGR);
+        break;
+        case 4:
+            rgbImage = cv::Mat(height, width, CV_8UC4, image->data());
+            cv::cvtColor(rgbImage, bgrImage, cv::COLOR_RGBA2BGRA);
+        break;
+    }
     cv::imshow("Get image", bgrImage);
     cv::waitKey();
 
